@@ -18,7 +18,7 @@ CREATE TABLE material(
     project_id INT NOT NULL,
     material_name VARCHAR(64) NOT NULL,
     num_required INT NOT NULL,
-    cost DECIMAL NOT NULL
+    cost DECIMAL(7,2) NOT NULL
 );
 
 CREATE TABLE step(
