@@ -16,7 +16,7 @@ public class DbConnection {
         String uri = String.format("jdbc:mysql://%s:%d/%s?user=%s&password=%s", HOST, PORT, SCHEMA, USER, PASSWORD);
         try {
             Connection conn = DriverManager.getConnection(uri);
-            System.out.println("Connection to " + SCHEMA + " is successful");
+            System.out.println("Connection to " + SCHEMA + " is successful\n");
             return conn;
         } catch(SQLException e) {
             System.out.println("Unable to connect to " + SCHEMA);

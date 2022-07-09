@@ -2,9 +2,12 @@ package projects.dao;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.util.*;
 
-
+import projects.entity.Category;
+import projects.entity.Material;
 import projects.entity.Project;
+import projects.entity.Step;
 import projects.exception.DbException;
 import provided.util.DaoBase;
 
@@ -16,7 +19,9 @@ public class ProjectDao extends DaoBase{
     private static final String PROJECT_CATEGORY_TABLE = "project_category";
     private static final String STEP_TABLE = "step";
     
-    //inserts a project row into the project table
+    /*
+     * inserts a project row into the project table
+     */
     public Project insertProject(Project project) {
       //@formatter:off
         String sql = ""
@@ -51,6 +56,144 @@ public class ProjectDao extends DaoBase{
         }
         catch(SQLException e) {
             throw new DbException(e);
+        }
+    }
+    /*
+     * lists all projects without details
+     */
+    public List<Project> fetchAllProjects() {
+        String sql = "SELECT * FROM " + PROJECT_TABLE + " ORDER BY project_name";
+        
+        try(Connection conn = DbConnection.getConnection()){
+            startTransaction(conn);
+            
+            try(PreparedStatement stmt = conn.prepareStatement(sql)){
+                try(ResultSet rs = stmt.executeQuery()){
+                    List<Project> projects = new LinkedList<>();
+                    
+                    while(rs.next()) {
+                        Project project = new Project();
+                        project.setActualHours(rs.getBigDecimal("actual_hours"));
+                        project.setDifficulty(rs.getObject("difficulty", Integer.class));
+                        project.setEstimatedHours(rs.getBigDecimal("estimated_hours"));
+                        project.setNotes(rs.getString("notes"));
+                        project.setProjectId(rs.getObject("project_id", Integer.class));
+                        project.setProjectName(rs.getString("project_name"));
+                        
+                        projects.add(project);
+                    }
+                    
+                    return projects;
+                }
+            }
+            catch(Exception e) {
+                rollbackTransaction(conn);
+                throw new DbException(e);
+            }
+        }
+        catch(SQLException e) {
+            throw new DbException(e);
+        }
+
+    }
+    /*
+     * Retrieves a single project row and all details
+     */
+    public Optional<Project> fetchProjectByID(Integer projectID)  {
+        String sql = "SELECT * FROM " + PROJECT_TABLE + " WHERE project_id = ?";
+        
+        try(Connection conn = DbConnection.getConnection()) {
+            startTransaction (conn);
+            try {
+                Project project = null;
+                
+                try(PreparedStatement stmt = conn.prepareStatement(sql)){
+                    setParameter(stmt, 1, projectID, Integer.class);
+                    
+                    try(ResultSet rs = stmt.executeQuery()){
+                        if(rs.next()) {
+                            project = extract(rs,Project.class);
+                        }
+                    }
+                }
+                
+                if(Objects.nonNull(project)) {
+                    project.getMaterials().addAll(fetchMaterialsForProject(conn, projectID));
+                    project.getSteps().addAll(fetchStepsForProject(conn, projectID));
+                    project.getCategories().addAll(fetchCategoriesForProject(conn, projectID));
+                }
+                commitTransaction(conn);
+                return Optional.ofNullable(project);
+            }
+            catch(Exception e) {
+                rollbackTransaction(conn);
+                throw new DbException(e);
+            }
+        }
+        catch(SQLException e) {
+            throw new DbException (e);
+        }
+        
+    }
+    
+    /*
+     * fetches a list of categories for a project
+     */
+    private List<Category> fetchCategoriesForProject(Connection conn, Integer projectID) throws SQLException {
+        String sql = "" + "SELECT c.* FROM " + CATEGORY_TABLE + " c " + "JOIN " + PROJECT_CATEGORY_TABLE + " pc USING (category_id) " + " WHERE project_id = ?";
+        
+        try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+            setParameter(stmt, 1, projectID, Integer.class);
+            
+            try(ResultSet rs = stmt.executeQuery()) {
+                List<Category> categories = new LinkedList<>();
+                
+                while(rs.next()) {
+                    categories.add(extract(rs, Category.class));
+                }
+                
+                return categories;
+            }
+        }
+    }
+    /*
+     * fetches a list of steps for a project
+     */
+    private List<Step> fetchStepsForProject(Connection conn, Integer projectID) throws SQLException {
+        String sql = "" + "SELECT * FROM " + STEP_TABLE + " WHERE project_id = ?";
+        
+        try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+            setParameter(stmt, 1, projectID, Integer.class);
+            
+            try(ResultSet rs = stmt.executeQuery()) {
+                List<Step> steps = new LinkedList<>();
+                
+                while(rs.next()) {
+                    steps.add(extract(rs, Step.class));
+                }
+                
+                return steps;
+            }
+        }
+    }
+    /*
+     * fetches a list of materials
+     */
+    private List<Material> fetchMaterialsForProject(Connection conn, Integer projectID) throws SQLException {
+        String sql = "" + "SELECT * FROM " + MATERIAL_TABLE + " WHERE project_id = ?";
+        
+        try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+            setParameter(stmt, 1, projectID, Integer.class);
+            
+            try(ResultSet rs = stmt.executeQuery()) {
+                List<Material> materials = new LinkedList<>();
+                
+                while(rs.next()) {
+                    materials.add(extract(rs, Material.class));
+                }
+                
+                return materials;
+            }
         }
     }
 

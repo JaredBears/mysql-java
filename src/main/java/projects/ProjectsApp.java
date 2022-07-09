@@ -13,10 +13,13 @@ import projects.service.ProjectService;
 public class ProjectsApp {
     private Scanner sc = new Scanner(System.in);
     private ProjectService projectService = new ProjectService();
+    private Project curProject;
     
     // @formatter: off
     private List<String> operations = List.of(
-        "1) Add a project"
+        "1) Add a project",
+        "2) List projects",
+        "3) Select a project"
     );
     // @formatter: on
     
@@ -25,7 +28,10 @@ public class ProjectsApp {
 
     }
     
-    //this method repeatedly calls for a user selection from a menu and terminates when desired
+    /*
+     * this method repeatedly calls for a user selection from a menu and 
+     * terminates when desired
+     */
     private void processUserSelection() {
         boolean done = false;
         
@@ -40,6 +46,12 @@ public class ProjectsApp {
                     case 1:
                         createProject();
                         break;
+                    case 2:
+                        listProjects();
+                        break;
+                    case 3:
+                        selectProject();
+                        break;
                     default:
                         System.out.println("\n" + selection + " is not a valid selection. Try again.");
                         break;
@@ -51,7 +63,37 @@ public class ProjectsApp {
         
     }
     
-    //this method prints the menu operations and accepts the user's selected input
+    /*
+     * Assigns curProject, allowing the user to work with a particular project
+     */
+    private void selectProject() {
+        listProjects();
+        Integer projectID = getIntInput("Enter a project ID to select a project");
+        
+        curProject = null;
+        curProject = projectService.fetchProjectByID(projectID);
+        if(Objects.isNull(curProject)){
+            System.out.println("\nInvalid project ID selected.\n");
+        }
+        
+    }
+
+    /*
+     * Lists all projects without details
+     */
+    private void listProjects() {
+        List<Project> projects = projectService.fetchAllProjects();
+        
+        for(Project project : projects) {
+            System.out.println("   " + project.getProjectId() + ": " + project.getProjectName());
+        }
+        
+    }
+
+    /*
+     * this method prints the menu operations and accepts the user's 
+     * selected input
+     */
     private int getUserSelection() {
         printOperations();
         
@@ -87,6 +129,12 @@ public class ProjectsApp {
     private void printOperations() {
         System.out.println("\nThese are the available selections. Press the Enter key to quit.");
         operations.forEach(line -> System.out.println(" " + line));
+        
+        if(Objects.isNull(curProject)) {
+            System.out.println("\nYou are not working with a project.");
+        } else {
+            System.out.println("\nYou are working with project: " + curProject);
+        }
     }
     
     //gathers user input and converts to BigDecimal
