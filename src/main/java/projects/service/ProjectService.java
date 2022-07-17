@@ -4,6 +4,7 @@ import java.util.*;
 
 import projects.dao.ProjectDao;
 import projects.entity.Project;
+import projects.exception.DbException;
 
 public class ProjectService {
     private ProjectDao projectDao = new ProjectDao();
@@ -27,6 +28,16 @@ public class ProjectService {
      */
     public List<Project> fetchAllProjects() {
         return projectDao.fetchAllProjects();
+    }
+
+    /*
+     * Calls the DAO object to modify a single project, or throw an error if it does not exist
+     */
+    public void modifyProjectDetails(Project project) {
+        if(!projectDao.modifyProjectDetails(project)) {
+            throw new DbException("Project with ID=" + project.getProjectId() + " does not exist.");    
+        }
+        
     }
 
 }
