@@ -40,4 +40,14 @@ public class ProjectService {
         
     }
 
+    /*
+     * calls the DAO object to delete a single project
+     */
+    public void deleteProject(Integer projectID) {
+        if(!projectDao.deleteProject(projectID)) {
+            throw new DbException("Project with ID=" + projectID + " does not exist");
+        }
+        
+    }
+
 }

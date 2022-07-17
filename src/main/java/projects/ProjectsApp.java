@@ -20,7 +20,8 @@ public class ProjectsApp {
         "1) Add a project",
         "2) List projects",
         "3) Select a project",
-        "4) Update project details"
+        "4) Update project details",
+        "5) Delete a project"
     );
     // @formatter: on
     
@@ -56,6 +57,9 @@ public class ProjectsApp {
                     case 4:
                         updateProject();
                         break;
+                    case 5:
+                        deleteProject();
+                        break;
                     default:
                         System.out.println("\n" + selection + " is not a valid selection. Try again.");
                         break;
@@ -66,6 +70,20 @@ public class ProjectsApp {
         }
         
     }
+    /*
+     * Deletes a project selected by the user
+     */
+    private void deleteProject() {
+        listProjects();
+        Integer projectID = getIntInput("\nEnter a project ID to select a project");
+        projectService.deleteProject(projectID);
+        System.out.println("\nProject successfully deleted.");
+        if(projectID == curProject.getProjectId()) {
+            curProject = null;
+        }
+        
+    }
+
     /*
      * Checks to see if a project is selected, and if so allows the user to update the values one at a time.
      * If an entry is null, no change is made
@@ -90,6 +108,7 @@ public class ProjectsApp {
         project.setNotes(Objects.isNull(projectNotes) ? curProject.getNotes() : projectNotes);
         
         projectService.modifyProjectDetails(project);
+        curProject = projectService.fetchProjectByID(curProject.getProjectId());
         
     }
 
@@ -98,7 +117,7 @@ public class ProjectsApp {
      */
     private void selectProject() {
         listProjects();
-        Integer projectID = getIntInput("Enter a project ID to select a project");
+        Integer projectID = getIntInput("\nEnter a project ID to select a project");
         
         curProject = null;
         curProject = projectService.fetchProjectByID(projectID);
@@ -163,7 +182,7 @@ public class ProjectsApp {
         if(Objects.isNull(curProject)) {
             System.out.println("\nYou are not working with a project.");
         } else {
-            System.out.println("\nYou are working with project: " + curProject);
+            System.out.println("\nYou are working with project: " + curProject + "\n");
         }
     }
     
